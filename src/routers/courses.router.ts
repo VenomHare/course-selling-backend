@@ -5,7 +5,7 @@ import { roleMiddleware } from "../middleware/role.middleware";
 import { sendErrorResponse, sendSuccessResponse } from "../lib/response";
 import { CreateCourseSchema, EditCourseSchema } from "../validation/schemas";
 import { prisma } from "../db";
-import z, { core, xid } from "zod";
+import z from "zod";
 
 const coursesRouter = Router();
 
@@ -78,7 +78,6 @@ coursesRouter.get("/:id", authMiddleware, async (req, res) => {
             },
             include: {
                 Instructor: true,
-                Lessons: true
             }
         });
 
@@ -91,11 +90,7 @@ coursesRouter.get("/:id", authMiddleware, async (req, res) => {
             title: coursesData.title,
             description: coursesData.description,
             price: coursesData.price,
-            instructor: coursesData.Instructor.name,
-            lessons: coursesData.Lessons.map(l => ({
-                title: l.title,
-                content: l.content
-            }))
+            instructor: coursesData.Instructor.name
         };
 
         sendSuccessResponse(res, { data: response }, 200);
@@ -201,7 +196,8 @@ coursesRouter.delete("/:id", authMiddleware, roleMiddleware("INSTRUCTOR"), async
 
 coursesRouter.get("/:courseId/lessons", authMiddleware, async (req: AuthRequest, res) => {
     try {
-        const courseId = req.params.id;
+        const courseId = req.params.courseId;
+        console.log(courseId);
         const { data: id, success } = z.uuidv7().safeParse(courseId);
         if (!success) {
             sendErrorResponse(res, "Course not found", 404);

@@ -25,7 +25,7 @@ purchaseRouter.post("/purchases", authMiddleware, roleMiddleware("STUDENT"), asy
                 sendErrorResponse(res, "Course Not Found", 404);
                 throw new Error("Course Data not found");
             }
-            await tx.$queryRaw`SELECT * FROM course WHERE "id" = ${data.courseId} FOR UPDATE`;
+            await tx.$queryRaw`SELECT * FROM "Course" WHERE "id" = ${data.courseId} FOR UPDATE`;
 
             const userPurchases = await tx.purchase.findMany({ where: { userId: req.userId } });
             userPurchases.map(p => {
@@ -35,7 +35,7 @@ purchaseRouter.post("/purchases", authMiddleware, roleMiddleware("STUDENT"), asy
                 }
             });
 
-            const purchaseData = await tx.purchase.create({
+            await tx.purchase.create({
                 data: {
                     courseId: data.courseId,
                     userId: req.userId!

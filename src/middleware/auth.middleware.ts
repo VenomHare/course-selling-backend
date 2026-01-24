@@ -17,7 +17,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
             sendErrorResponse(res, "Authorization token not found", 401);
             return;
         }
-        const token = authHeader.split(" ")[0];
+        const token = authHeader.split(" ")[1];
         if (!token) {
             sendErrorResponse(res, "Invalid Token", 401);
             return;
