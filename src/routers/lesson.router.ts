@@ -31,7 +31,7 @@ lessonsRouter.post("/", authMiddleware, roleMiddleware("INSTRUCTOR"), async (req
             data
         });
 
-        sendSuccessResponse(res, { message: "Lesson Created", lessonId: insertData.id }, 201);
+        sendSuccessResponse(res, { message: "Lesson Created", id: insertData.id }, 200);
         return;
     }
     catch (err) {

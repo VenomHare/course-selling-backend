@@ -23,11 +23,10 @@ coursesRouter.post("/", authMiddleware, roleMiddleware("INSTRUCTOR"), async (req
                 instructorId: req.userId!
             }
         });
-
         sendSuccessResponse(res, {
             message: "Course Created!",
-            courseId: insertData.id
-        }, 201);
+            id: insertData.id
+        }, 200);
         return;
     }
     catch (err) {
@@ -38,7 +37,7 @@ coursesRouter.post("/", authMiddleware, roleMiddleware("INSTRUCTOR"), async (req
 })
 
 
-coursesRouter.get("/", authMiddleware, async (req: AuthRequest, res) => {
+coursesRouter.get("/", async (req: AuthRequest, res) => {
     try {
         const coursesData = await prisma.course.findMany({
             include: {
@@ -53,7 +52,7 @@ coursesRouter.get("/", authMiddleware, async (req: AuthRequest, res) => {
             instructor: c.Instructor.name
         }));
 
-        sendSuccessResponse(res, { data: response }, 200);
+        sendSuccessResponse(res, response);
         return;
     }
     catch (err) {
@@ -63,9 +62,10 @@ coursesRouter.get("/", authMiddleware, async (req: AuthRequest, res) => {
     }
 })
 
-coursesRouter.get("/:id", authMiddleware, async (req, res) => {
+coursesRouter.get("/:id",  async (req, res) => {
     try {
         const courseId = req.params.id;
+        console.log("Course Id:", courseId);
         const { data: id, success } = z.uuidv7().safeParse(courseId);
         if (!success) {
             sendErrorResponse(res, "Course not found", 404);
@@ -87,13 +87,14 @@ coursesRouter.get("/:id", authMiddleware, async (req, res) => {
         }
 
         const response = {
+            id: courseId,
             title: coursesData.title,
             description: coursesData.description,
             price: coursesData.price,
             instructor: coursesData.Instructor.name
         };
-
-        sendSuccessResponse(res, { data: response }, 200);
+        console.log(response);
+        sendSuccessResponse(res, response , 200);
         return;
     }
     catch (err) {
@@ -140,11 +141,9 @@ coursesRouter.patch("/:id", authMiddleware, roleMiddleware("INSTRUCTOR"), async 
 
         sendSuccessResponse(res, {
             message: "Edit Successful",
-            data: {
-                title: updateData.title,
-                description: updateData.description,
-                price: updateData.price
-            }
+            title: updateData.title,
+            description: updateData.description,
+            price: updateData.price
         });
         return;
     }
@@ -184,7 +183,7 @@ coursesRouter.delete("/:id", authMiddleware, roleMiddleware("INSTRUCTOR"), async
         });
 
         sendSuccessResponse(res, {
-            message: "Course Deleted!"
+            message: "Course deleted"
         })
     }
     catch (err) {
@@ -194,7 +193,7 @@ coursesRouter.delete("/:id", authMiddleware, roleMiddleware("INSTRUCTOR"), async
     }
 })
 
-coursesRouter.get("/:courseId/lessons", authMiddleware, async (req: AuthRequest, res) => {
+coursesRouter.get("/:courseId/lessons", async (req, res) => {
     try {
         const courseId = req.params.courseId;
         console.log(courseId);
@@ -219,11 +218,12 @@ coursesRouter.get("/:courseId/lessons", authMiddleware, async (req: AuthRequest,
 
         const response = coursesData.Lessons.map(l => ({
             id: l.id,
+            courseId: l.courseId,
             title: l.title,
             content: l.content
         }))
-
-        sendSuccessResponse(res, { data: response }, 200);
+        console.log(response);
+        sendSuccessResponse(res, response, 200);
         return;
     }
     catch (err) {

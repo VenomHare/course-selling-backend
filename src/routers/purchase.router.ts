@@ -9,6 +9,30 @@ import z from "zod";
 
 const purchaseRouter = Router();
 
+purchaseRouter.get("/me", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+        const userData = await prisma.user.findFirst({
+            where: {
+                id: req.userId
+            }
+        });
+        if (!userData) {
+            sendErrorResponse(res, "Unauthorized", 401);
+            return
+        }
+        sendSuccessResponse(res, {
+            id: userData.id,
+            email: userData.email,
+            name: userData.name
+        });
+    }
+    catch (err) {
+        console.log(err);
+        sendErrorResponse(res, "Something went wrong!");
+        return 
+    }
+})
+
 purchaseRouter.post("/purchases", authMiddleware, roleMiddleware("STUDENT"), async (req: AuthRequest, res) => {
     try {
         const { data, success } = PurchaseCourseSchema.safeParse(req.body);
@@ -42,7 +66,7 @@ purchaseRouter.post("/purchases", authMiddleware, roleMiddleware("STUDENT"), asy
                 }
             });
 
-            sendSuccessResponse(res, { message: "Purchase successful" }, 201);
+            sendSuccessResponse(res, { message: "Purchase successful" }, 200);
             return
         });
         return;
@@ -56,15 +80,15 @@ purchaseRouter.post("/purchases", authMiddleware, roleMiddleware("STUDENT"), asy
 
 purchaseRouter.get("/users/:id/purchases", authMiddleware, async (req: AuthRequest, res) => {
     try {
-        const userId = req.params.id;
-        const { data, success } = z.uuidv7().safeParse(userId);
-        if (!success) {
-            sendErrorResponse(res, "User not found", 404);
-            return;
+        const userId = req.params.id as string;
+        
+        if (req.role == "STUDENT" && req.userId !== userId) {
+            sendErrorResponse(res, "Forbidden", 403);
+            return
         }
 
         const userData = await prisma.user.findUnique({
-            where: { id: data },
+            where: { id: userId },
             include: {
                 Purchases: {
                     include: {
@@ -80,14 +104,14 @@ purchaseRouter.get("/users/:id/purchases", authMiddleware, async (req: AuthReque
         }
 
         const response = userData.Purchases.map(p => ({
-            courseId: p.courseId,
-            title: p.Course.title,
-            description: p.Course.description
+            course: {
+                id: p.courseId,
+                title: p.Course.title,
+                description: p.Course.description
+            }
         }))
-
-        sendSuccessResponse(res, {
-            data: response
-        }, 200);
+        console.log(response);
+        sendSuccessResponse(res, response, 200);
     }
     catch (err) {
         console.log(err);

@@ -36,7 +36,7 @@ authRouter.post("/signup", async (req, res) => {
 
         sendSuccessResponse(res, {
             message: "User Created Successfully!"
-        }, 201);
+        });
         return;
     }
     catch (err) {
@@ -86,5 +86,4 @@ authRouter.post("/login", async (req, res) => {
         return 
     }
 })
-
 export default authRouter
